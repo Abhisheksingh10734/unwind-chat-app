@@ -7,7 +7,7 @@ import {HomeFooter} from "../components/HomeFooter"
 
 export const Home = () => {
     return (
-        <div className='flex flex-col gap-4'>
+        <div className='flex flex-col gap-4 px-4 py-2 mb-17'>
 
             <HomeTopbar />
 
