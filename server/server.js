@@ -19,14 +19,12 @@ io.on("connection", (socket) => {
   console.log("Connected:", socket.id);
 
   socket.on("message", (msg) => {
-    console.log("Received:", msg);
-
-    io.emit("message", msg);
+    io.emit("message", (msg));
   });
 
   socket.on("disconnect", () => {
-    console.log("Disconnected:", socket.id);
-  });
+  console.log(socket.id, "disconnected");
+});
 });
 
 server.listen(3000, () => {
