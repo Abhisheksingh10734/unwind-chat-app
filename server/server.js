@@ -19,22 +19,20 @@ const users = new Map();
 
 io.on("connection", (socket) => {
 
-  socket.on("register", (userId) => {
-    users.set(userId, socket.id);
-
-    console.log("Registered:", userId);
-    console.log(users);
+  socket.on("join-room", (roomId) => {
+    console.log("JOIN EVENT RECEIVED:", roomId);
+    socket.join(roomId);
   });
 
-  socket.on("private-message", (msg) => {
 
-    const receiverSocketId = users.get(msg.to);
+  socket.on("message", ({ roomId, text, senderId }) => {
+    console.log("Message received:", roomId, text);
 
-    socket.emit("message", msg);
-
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("message", msg);
-    }
+    io.to(roomId).emit("message", {
+      text,
+      senderId,
+      createdAt: Date.now()
+    });
   });
 
   socket.on("disconnect", () => {

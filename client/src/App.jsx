@@ -6,10 +6,11 @@ import { UserChat } from './pages/UserChat';
 
 export const App = () => {
 
-<<<<<<< HEAD
-// const socket = useMemo(() => {io("http://localhost:3000")}, []);
-=======
   const socket = io("http://localhost:3000");
+  socket.on("connect", () => {
+    console.log("connected socket: ", socket.id);
+    
+  })
   const [isChatVisible, setIsChatVisible] = useState(false);
   const [isHomeVisible, setIsHomeVisible] = useState(true);
   const [selectedUser, setSelectedUser] = useState({ userLogo: "", userName: "", status: "", id: "" });
@@ -23,7 +24,6 @@ export const App = () => {
   //   console.log(selectedUser);
 
   // }, [isChatVisible, isHomeVisible, selectedUser]);
->>>>>>> frontend/chatview
 
   return (
     <div className='w-full h-full bg-[#1E1B2E] text-white'>

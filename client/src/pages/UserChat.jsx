@@ -1,73 +1,88 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ChatviewFooter } from '../components/ChatviewFooter';
-import { ChatviewNav } from '../components/ChatviewNav';
+import { useEffect, useMemo, useState } from "react";
+import { ChatviewFooter } from "../components/ChatviewFooter";
+import { ChatviewNav } from "../components/ChatviewNav";
 import { io } from "socket.io-client";
 
-export const UserChat = ({ isChatVisible, setIsChatVisible, setIsHomeVisible, setSelectedUser, selectedUser, userId }) => {
+export const UserChat = ({
+    isChatVisible,
+    setIsChatVisible,
+    setIsHomeVisible,
+    setSelectedUser,
+    selectedUser,
+    userId
+}) => {
+
     const [data, setData] = useState([]);
 
-    const filteredMessages = data.filter((msg) => {
-        return (
-            (msg.senderId === userId &&
-                msg.receiverId === selectedUser.id) ||
-
-            (msg.senderId === selectedUser.id &&
-                msg.receiverId === userId)
-        );
-    });
-
-    console.log("data: ", data);
-    console.log("filtered: ", filteredMessages);
-
     const socket = useMemo(() => {
-        return io("http://localhost:3000")
+        return io("http://localhost:3000");
     }, []);
 
+    // 🟢 JOIN ROOM + LISTEN MESSAGE
     useEffect(() => {
+        if (!selectedUser) return;
+
+        const roomId =
+            userId < selectedUser.id
+                ? `${userId}_${selectedUser.id}`
+                : `${selectedUser.id}_${userId}`;
+
+        console.log("Joining room:", roomId);
+
+        socket.emit("join-room", roomId);
+
         const handleMessage = (msg) => {
-            console.log("Received:", msg);
+            console.log("UI received:", msg);
+
             setData((prev) => [
                 ...prev,
                 {
                     id: Date.now(),
                     text: msg.text,
                     senderId: msg.senderId,
-                    receiverId: msg.to,
-                    createdAt: msg.createdAt,
-                },
+                    createdAt: msg.createdAt
+                }
             ]);
-
         };
 
-        socket.emit("register", userId);
         socket.on("message", handleMessage);
 
         return () => {
             socket.off("message", handleMessage);
         };
-    }, [socket, userId]);
 
+    }, [socket, selectedUser, userId]);
+
+    // 🧠 SIMPLE RENDER (NO FILTER)
     return (
-        isChatVisible && (
-            <div className='h-screen w-full bg-[#16132A]'>
+        isChatVisible && selectedUser && (
+            <div className="h-screen w-full bg-[#16132A]">
 
-                <ChatviewNav socket={socket} setIsChatVisible={setIsChatVisible} setIsHomeVisible={setIsHomeVisible} setSelectedUser={setSelectedUser} selectedUser={selectedUser} />
+                <ChatviewNav
+                    socket={socket}
+                    setIsChatVisible={setIsChatVisible}
+                    setIsHomeVisible={setIsHomeVisible}
+                    setSelectedUser={setSelectedUser}
+                    selectedUser={selectedUser}
+                />
 
                 <div className="fixed top-16 bottom-14 left-0 right-0 overflow-y-auto bg-gray-400 p-4 scrollbar-none">
 
-                    {filteredMessages.map((item, idx) => (
+                    {data.map((item) => (
                         <div
-                            key={idx}
-                            className={`flex mb-3 ${item.senderId === userId
-                                ? "justify-end"
-                                : "justify-start"
-                                }`}
+                            key={item.id}
+                            className={`flex mb-3 ${
+                                item.senderId === userId
+                                    ? "justify-end"
+                                    : "justify-start"
+                            }`}
                         >
                             <div
-                                className={`px-4 py-2 rounded-lg max-w-[70%] text-white ${item.senderId === userId
-                                    ? "bg-green-600"
-                                    : "bg-amber-950"
-                                    }`}
+                                className={`px-4 py-2 rounded-lg max-w-[70%] text-white ${
+                                    item.senderId === userId
+                                        ? "bg-green-600"
+                                        : "bg-amber-950"
+                                }`}
                             >
                                 {item.text}
 
@@ -84,10 +99,14 @@ export const UserChat = ({ isChatVisible, setIsChatVisible, setIsHomeVisible, se
 
                 </div>
 
-                <ChatviewFooter setData={setData} socket={socket} selectedUser={selectedUser} userId={userId} />
+                <ChatviewFooter
+                    setData={setData}
+                    socket={socket}
+                    selectedUser={selectedUser}
+                    userId={userId}
+                />
 
             </div>
         )
     );
-
 };

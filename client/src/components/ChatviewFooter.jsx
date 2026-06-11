@@ -12,7 +12,7 @@ export const ChatviewFooter = ({ setData, socket, selectedUser, userId }) => {
     };
 
     const timeoutRef = useRef(null);
-    
+
     const handleChange = (e) => {
         setMessage(e.target.value);
     };
@@ -20,14 +20,19 @@ export const ChatviewFooter = ({ setData, socket, selectedUser, userId }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        if (!message.trim()) return;
+        if (!message.trim() || !selectedUser) return;
+
+        const roomId =
+            userId < selectedUser.id
+                ? `${userId}_${selectedUser.id}`
+                : `${selectedUser.id}_${userId}`;
 
         if (textareaRef.current) {
             textareaRef.current.style.height = "auto";
         }
 
-        socket.emit("private-message", {
-            to: receivedID,
+        socket.emit("message", {
+            roomId,
             text: message,
             senderId: userId,
             createdAt: Date.now()
