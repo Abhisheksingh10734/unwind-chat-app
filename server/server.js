@@ -15,18 +15,32 @@ const io = new Server(server, {
   },
 });
 
+const users = new Map();
+
 io.on("connection", (socket) => {
-  console.log("Connected:", socket.id);
 
-  socket.on("message", (msg) => {
-    console.log("Received:", msg);
+  socket.on("register", (userId) => {
+    users.set(userId, socket.id);
 
-    io.emit("message", msg);
+    console.log("Registered:", userId);
+    console.log(users);
+  });
+
+  socket.on("private-message", (msg) => {
+
+    const receiverSocketId = users.get(msg.to);
+
+    socket.emit("message", msg);
+
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("message", msg);
+    }
   });
 
   socket.on("disconnect", () => {
     console.log("Disconnected:", socket.id);
   });
+
 });
 
 server.listen(3000, () => {
