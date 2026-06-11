@@ -5,7 +5,7 @@ import {HomeNav} from "../components/HomeNav"
 import {HomeChats} from "../components/HomeChats"
 import {HomeFooter} from "../components/HomeFooter"
 
-export const Home = () => {
+export const Home = ({setSelectedUser, setIsChatVisible ,setIsHomeVisible}) => {
     return (
         <div className='flex flex-col gap-4 px-4 py-2 mb-17'>
 
@@ -15,7 +15,7 @@ export const Home = () => {
 
             <HomeNav />
 
-            <HomeChats />
+            <HomeChats setSelectedUser={setSelectedUser} setIsHomeVisible={setIsHomeVisible} setIsChatVisible={setIsChatVisible} />
 
             <HomeFooter />
 

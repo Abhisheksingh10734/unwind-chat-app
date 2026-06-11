@@ -1,11 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { users } from '../utils/home.utils.js';
 
-export const HomeChats = () => {
+export const HomeChats = ({ setSelectedUser, setIsHomeVisible, setIsChatVisible }) => {
+    function selectUser(user) {
+        setSelectedUser({ userLogo: user.userLogo, userName: user.userName, status: user.status, id: user.id })
+    };
+
     return (
         <div className='flex flex-col w-full gap-2'>
             {users.map((item, idx) => (
-                <div id='chatDiv' className='bg-[#16132A] rounded-xl cursor-pointer hover:bg-[#2D2A40]'>
+                <div key={idx} id='chatDiv' className='bg-[#16132A] rounded-xl cursor-pointer hover:bg-[#2D2A40]' onClick={() => {
+                    selectUser(item);
+                    setIsHomeVisible(false);
+                    setIsChatVisible(true);
+                }}>
                     <div id='chat' className='flex justify-between p-3 items-center'>
                         <div id='leftContainer' className='flex items-center justify-center gap-4'>
                             <div id='icon' className='bg-purple-900 relative rounded-full p-4 flex items-center justify-center text-xs font-bold'>
