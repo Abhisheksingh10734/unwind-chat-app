@@ -1,11 +1,11 @@
-import React from 'react'
-import {HomeTopbar} from "../components/HomeTopbar"
-import {HomeSearchbar} from "../components/HomeSearchbar"
-import {HomeNav} from "../components/HomeNav"
-import {HomeChats} from "../components/HomeChats"
-import {HomeFooter} from "../components/HomeFooter"
+import React from 'react';
+import { HomeTopbar } from "../components/HomeTopbar";
+import { HomeSearchbar } from "../components/HomeSearchbar";
+import { HomeNav } from "../components/HomeNav";
+import { HomeChats } from "../components/HomeChats";
+import { HomeFooter } from "../components/HomeFooter";
 
-export const Home = ({setSelectedUser, setIsChatVisible ,setIsHomeVisible}) => {
+export const Home = () => {
     return (
         <div className='flex flex-col gap-4 px-4 py-2 mb-17'>
 
@@ -15,10 +15,10 @@ export const Home = ({setSelectedUser, setIsChatVisible ,setIsHomeVisible}) => {
 
             <HomeNav />
 
-            <HomeChats setSelectedUser={setSelectedUser} setIsHomeVisible={setIsHomeVisible} setIsChatVisible={setIsChatVisible} />
+            <HomeChats />
 
             <HomeFooter />
 
         </div>
-    )
-}
+    );
+};

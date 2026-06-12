@@ -1,7 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
 import { ChatviewFooter } from "../components/ChatviewFooter";
 import { ChatviewNav } from "../components/ChatviewNav";
-import { io } from "socket.io-client";
 
 export const UserChat = ({
     isChatVisible,
@@ -11,55 +9,11 @@ export const UserChat = ({
     selectedUser,
     userId
 }) => {
-
-    const [data, setData] = useState([]);
-
-    const socket = useMemo(() => {
-        return io("http://localhost:3000");
-    }, []);
-
-    // 🟢 JOIN ROOM + LISTEN MESSAGE
-    useEffect(() => {
-        if (!selectedUser) return;
-
-        const roomId =
-            userId < selectedUser.id
-                ? `${userId}_${selectedUser.id}`
-                : `${selectedUser.id}_${userId}`;
-
-        console.log("Joining room:", roomId);
-
-        socket.emit("join-room", roomId);
-
-        const handleMessage = (msg) => {
-            console.log("UI received:", msg);
-
-            setData((prev) => [
-                ...prev,
-                {
-                    id: Date.now(),
-                    text: msg.text,
-                    senderId: msg.senderId,
-                    createdAt: msg.createdAt
-                }
-            ]);
-        };
-
-        socket.on("message", handleMessage);
-
-        return () => {
-            socket.off("message", handleMessage);
-        };
-
-    }, [socket, selectedUser, userId]);
-
-    // 🧠 SIMPLE RENDER (NO FILTER)
     return (
         isChatVisible && selectedUser && (
             <div className="h-screen w-full bg-[#16132A]">
 
                 <ChatviewNav
-                    socket={socket}
                     setIsChatVisible={setIsChatVisible}
                     setIsHomeVisible={setIsHomeVisible}
                     setSelectedUser={setSelectedUser}
@@ -68,40 +22,11 @@ export const UserChat = ({
 
                 <div className="fixed top-16 bottom-14 left-0 right-0 overflow-y-auto bg-gray-400 p-4 scrollbar-none">
 
-                    {data.map((item) => (
-                        <div
-                            key={item.id}
-                            className={`flex mb-3 ${
-                                item.senderId === userId
-                                    ? "justify-end"
-                                    : "justify-start"
-                            }`}
-                        >
-                            <div
-                                className={`px-4 py-2 rounded-lg max-w-[70%] text-white ${
-                                    item.senderId === userId
-                                        ? "bg-green-600"
-                                        : "bg-amber-950"
-                                }`}
-                            >
-                                {item.text}
-
-                                <p className="text-xs text-gray-300 text-right">
-                                    {item.createdAt &&
-                                        new Date(item.createdAt).toLocaleTimeString([], {
-                                            hour: "2-digit",
-                                            minute: "2-digit",
-                                        })}
-                                </p>
-                            </div>
-                        </div>
-                    ))}
+                    {/* Messages will be rendered here */}
 
                 </div>
 
                 <ChatviewFooter
-                    setData={setData}
-                    socket={socket}
                     selectedUser={selectedUser}
                     userId={userId}
                 />

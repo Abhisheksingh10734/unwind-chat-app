@@ -15,25 +15,7 @@ const io = new Server(server, {
   },
 });
 
-const users = new Map();
-
 io.on("connection", (socket) => {
-
-  socket.on("join-room", (roomId) => {
-    console.log("JOIN EVENT RECEIVED:", roomId);
-    socket.join(roomId);
-  });
-
-
-  socket.on("message", ({ roomId, text, senderId }) => {
-    console.log("Message received:", roomId, text);
-
-    io.to(roomId).emit("message", {
-      text,
-      senderId,
-      createdAt: Date.now()
-    });
-  });
 
   socket.on("disconnect", () => {
     console.log("Disconnected:", socket.id);
