@@ -78,7 +78,7 @@ export const Otp = () => {
         </div>
 
         <div className='flex flex-col items-center gap-6 w-full'>
-          <p className='text-[#e2d9fb] text-sm'>Enter the 6-digit OTP sent to your device</p>
+          <p className='text-[#e2d9fb] text-sm'>Enter the 6-digit OTP sent to your email</p>
 
           <div className='flex gap-3'>
             {otp.map((digit, idx) => (
@@ -117,7 +117,7 @@ export const Otp = () => {
 
           <button
             onClick={handleSubmit}
-            className='bg-[#6B6880] hover:bg-[#6C7992] active:scale-95 text-white font-bold tracking-wider py-2 rounded-xl w-1/2 transition-all duration-150'
+            className='bg-[#6B6880] hover:bg-[#6C7992] active:scale-95 text-white font-bold tracking-wider py-2 rounded-xl w-1/2 transition-all duration-150 cursor-pointer'
           >
             Submit
           </button>
