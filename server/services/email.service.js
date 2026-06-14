@@ -1,7 +1,8 @@
 import { transporter } from "../config/nodemailer.config.js";
 
 export const sendOtpEmail = async (email, otp) => {
-    return await transporter.sendMail({
+    try {
+        return await transporter.sendMail({
         from: process.env.EMAIL_USER,
         to: email,
         subject: "OTP Verification",
@@ -12,4 +13,10 @@ export const sendOtpEmail = async (email, otp) => {
             <p>Don't share your otp with anyone.</p>
         `,
     });
+    } catch (error) {
+        return res.status(400).json({
+            success: false,
+            message: "Something went wrong while sending email."
+        })
+    }
 };

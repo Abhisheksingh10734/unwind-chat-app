@@ -4,6 +4,7 @@ import { Otp } from './pages/Otp';
 import { Signup } from './pages/Signup';
 import { UserChat } from './pages/UserChat';
 import { useState } from "react";
+import { ToastContainer } from "react-toastify";
 
 export const App = () => {
 
@@ -11,6 +12,8 @@ export const App = () => {
 
   return (
     <div className='w-full h-screen bg-[#1E1B2E] text-white'>
+
+       <ToastContainer position="top-right" autoClose={3000} />
 
       <Routes>
         <Route path="/" element={<Signup />} />

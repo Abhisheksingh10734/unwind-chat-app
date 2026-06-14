@@ -3,6 +3,6 @@ import { sendOtp } from "../controllers/sendOtp.controllers.js";
 
 const router = Router();
 
-router.post("/otp", sendOtp);
+router.post("/otp/sent", sendOtp);
 
 export default router;

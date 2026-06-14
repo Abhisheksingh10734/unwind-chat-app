@@ -4,9 +4,11 @@ import express from "express";
 import http from "http";
 import { Server } from "socket.io";
 import cors from "cors";
+import db from "./db/index.db.js";
 
 // routes
 import sendOtpRoute from "./routes/sendOtp.routes.js";
+import resendOtpRoute from "./routes/resendOtp.routes.js";
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -31,7 +33,8 @@ const io = new Server(server, {
 });
 
 // Routes
-app.use("/", sendOtpRoute);
+app.use("/api", sendOtpRoute);
+app.use("/api", resendOtpRoute);
 
 // Health check
 app.get("/", (req, res) => {
@@ -41,6 +44,14 @@ app.get("/", (req, res) => {
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+db.connect()
+  .then(() => {
+    console.log("DB connected successfully.");
+
+    server.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("DB connection failed:", err);
+  });
