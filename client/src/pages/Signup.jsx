@@ -14,38 +14,43 @@ export const Signup = () => {
     const handleOtpSent = async (e) => {
         e.preventDefault();
 
-        try {
-            const error = verifyEmail(emailVal);
-            if (error) {
-                setEmailVal("");
-                return toast.error(error, {
-                    toastId: "emailWarning"
-                });
-            }
+        const error = verifyEmail(emailVal);
 
+        if (error) {
+            setEmailVal("");
+            return toast.error(error, {
+                toastId: "emailWarning",
+            });
+        }
+
+        try {
             setIsLoading(true);
 
             const res = await api.post("/api/otp/sent", {
                 email: emailVal,
             });
 
-            if (res.data.success) {
-                toast.success(`OTP sent successfully to ${res.data.email}`);
-                navigate("/otp", {
-                    state: {
-                        email: emailVal
-                    }
-                });
+            if (!res.data.success) {
+                return toast.error(res.data.message);
             }
 
+            toast.success(`OTP sent successfully to ${res.data.email}`);
+
+            navigate("/otp", {
+                state: {
+                    email: emailVal,
+                },
+            });
+
         } catch (error) {
-            toast.error(error);
-            navigate("/");
+            toast.error(
+                error.response?.data?.message ||
+                error.message ||
+                "Something went wrong"
+            );
         } finally {
             setIsLoading(false);
         }
-
-        setEmailVal("");
     };
 
     return (
@@ -75,6 +80,10 @@ export const Signup = () => {
                             >Get OTP</button>
                         </div>
                     </form>
+
+                    <div className='mt-5'>
+                        <h4>Already have an account? <Link to={"/otp"}><span className='text-blue-800 font-bold'>Log in</span></Link></h4>
+                    </div>
                 </div>
             </div>
         </>

@@ -1,71 +1,41 @@
 import React from 'react';
 import { users } from '../utils/home.utils.js';
 
+const statusColor = {
+  online: 'bg-[#22C55E]',
+  offline: 'bg-[#6B6880]',
+  away: 'bg-[#F59E0B]',
+  busy: 'bg-[#EF4444]',
+};
+
 export const HomeChats = () => {
     return (
         <div className='flex flex-col w-full gap-2'>
             {users.map((item, idx) => (
                 <div
                     key={idx}
-                    id='chatDiv'
-                    className='bg-[#16132A] rounded-xl cursor-pointer hover:bg-[#2D2A40]'
+                    className='bg-[#16132A] rounded-xl cursor-pointer hover:bg-[#2D2A40] transition-colors duration-150'
                 >
-                    <div
-                        id='chat'
-                        className='flex justify-between p-3 items-center'
-                    >
-                        <div
-                            id='leftContainer'
-                            className='flex items-center justify-center gap-4'
-                        >
-                            <div
-                                id='icon'
-                                className='bg-purple-900 relative rounded-full p-4 flex items-center justify-center text-xs font-bold'
-                            >
-                                <h2>{item.userLogo}</h2>
-
-                                <div
-                                    className={`w-3 h-3 absolute rounded-full right-0 top-8 ${
-                                        item.status === 'online'
-                                            ? 'bg-[#22C55E]'
-                                            : item.status === 'offline'
-                                            ? 'bg-[#6B6880]'
-                                            : item.status === 'away'
-                                            ? 'bg-[#F59E0B]'
-                                            : item.status === 'busy'
-                                            ? 'bg-[#EF4444]'
-                                            : 'hidden'
-                                    }`}
-                                ></div>
+                    <div className='flex justify-between p-3 items-center'>
+                        <div className='flex items-center gap-3'>
+                            <div className='bg-purple-900 relative rounded-full w-11 h-11 flex items-center justify-center text-sm font-bold flex-shrink-0'>
+                                <span>{item.userLogo}</span>
+                                <div className={`w-3 h-3 absolute rounded-full right-0 bottom-0 border-2 border-[#16132A] ${statusColor[item.status] ?? 'hidden'}`} />
                             </div>
 
-                            <div
-                                id='name'
-                                className='flex flex-col items-start justify-center'
-                            >
-                                <h2 className='text-[16px]'>
-                                    {item.userName}
-                                </h2>
-
-                                <p className='text-[12px] text-[#6B6880]'>
-                                    {item.status}
-                                </p>
+                            <div className='flex flex-col items-start justify-center'>
+                                <h2 className='text-[15px] font-medium text-white'>{item.userName}</h2>
+                                <p className='text-[12px] text-[#6B6880] capitalize'>{item.status}</p>
                             </div>
                         </div>
 
-                        <div
-                            id='rightContainer'
-                            className='flex flex-col items-center justify-center gap-2'
-                        >
-                            <h4 className='text-[#6B6880] text-xs font-bold'>
+                        <div className='flex flex-col items-end justify-center gap-1.5'>
+                            <span className='text-[#6B6880] text-[11px] font-semibold whitespace-nowrap'>
                                 {item.lastSeen}
-                            </h4>
-
+                            </span>
                             {item.pendingCount > 0 && (
-                                <span className='bg-[#7C3AED] text-white text-xs min-w-6 h-6 px-2 rounded-full flex items-center justify-center'>
-                                    {item.pendingCount > 99
-                                        ? '99+'
-                                        : item.pendingCount}
+                                <span className='bg-[#7C3AED] text-white text-[11px] min-w-[22px] h-[22px] px-1.5 rounded-full flex items-center justify-center font-semibold'>
+                                    {item.pendingCount > 99 ? '99+' : item.pendingCount}
                                 </span>
                             )}
                         </div>

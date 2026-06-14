@@ -1,30 +1,47 @@
 import { Routes, Route } from "react-router-dom";
-import { Home } from './pages/Home';
-import { Otp } from './pages/Otp';
-import { Signup } from './pages/Signup';
-import { UserChat } from './pages/UserChat';
-import { useState } from "react";
+import { Home } from "./pages/Home";
+import { Otp } from "./pages/Otp";
+import { Signup } from "./pages/Signup";
 import { ToastContainer } from "react-toastify";
+import { AuthLoader } from "./components/AuthLoader";
+
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 export const App = () => {
 
-  const [isLoading, setIsLoading] = useState(false);
+    return (
+        <div className="w-full h-screen bg-[#1E1B2E] text-white">
 
-  return (
-    <div className='w-full h-screen bg-[#1E1B2E] text-white'>
+          <AuthLoader />
 
-       <ToastContainer position="top-right" autoClose={3000} />
+            <ToastContainer
+                position="top-right"
+                autoClose={3000}
+            />
 
-      <Routes>
-        <Route path="/" element={<Signup />} />
-        <Route path="/otp" element={<Otp />} />
-      </Routes>
+            <Routes>
 
+                <Route
+                    path="/"
+                    element={<Signup />}
+                />
 
-      {/* <Home /> */}
+                <Route
+                    path="/otp"
+                    element={<Otp />}
+                />
 
-      {/* <UserChat /> */}
+                <Route
+                    path="/chats"
+                    element={
+                        <ProtectedRoute>
+                            <Home />
+                        </ProtectedRoute>
+                    }
+                />
 
-    </div>
-  );
+            </Routes>
+
+        </div>
+    );
 };

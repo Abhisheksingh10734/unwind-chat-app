@@ -25,7 +25,7 @@ export const sendOtp = async (req, res) => {
         if (existingEmail.rows.length > 0) {
             return res.status(409).json({
                 success: false,
-                message: "Email already exists. Try logging in."
+                message: "Email already exists. Try logging in..."
             });
         }
 

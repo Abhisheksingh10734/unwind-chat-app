@@ -1,28 +1,38 @@
-import React from 'react'
+import React, { useState } from 'react'
+
+const tabs = [
+    { icon: '🗣️', label: 'Chats' },
+    { icon: '👨‍👩‍👧‍👦', label: 'Groups' },
+    { icon: '🚨', label: 'Alerts' },
+];
 
 export const HomeFooter = () => {
-  return (
-    <>
-        <div className='flex fixed bottom-0 left-0 bg-gray-600 w-full justify-evenly p-2 items-center'>
-                <div className='flex items-center justify-center flex-col'>
-                    <h2>🗣️</h2>
-                    <h3>Chats</h3>
+    const [active, setActive] = useState(0);
+    return (
+        <div className='flex fixed bottom-0 left-0 w-full bg-[#0D0B1E] border-t border-[#2D2A40] justify-around py-2 items-center z-50'>
+            {tabs.map((tab, idx) => (
+                <button
+                    key={idx}
+                    onClick={() => setActive(idx)}
+                    className='flex flex-col items-center gap-0.5 px-4 py-1'
+                >
+                    <span className='text-2xl leading-none'>{tab.icon}</span>
+                    <span className={`text-[11px] font-medium ${active === idx ? 'text-[#7C3AED]' : 'text-[#6B6880]'}`}>
+                        {tab.label}
+                    </span>
+                </button>
+            ))}
+            <button
+                onClick={() => setActive(3)}
+                className='flex flex-col items-center gap-0.5 px-4 py-1'
+            >
+                <div className='bg-[#2563EB] rounded-full w-7 h-7 flex items-center justify-center'>
+                    <span className='text-[11px] font-bold text-white'>AS</span>
                 </div>
-                <div className='flex items-center justify-center flex-col'>
-                    <h2>👨‍👩‍👧‍👦</h2>
-                    <h3>Groups</h3>
-                </div>
-                <div className='flex items-center justify-center flex-col'>
-                    <h2>🚨</h2>
-                    <h3>Alerts</h3>
-                </div>
-                <div className='flex items-center justify-center flex-col'>
-                    <div className='bg-blue-500 rounded-full p-2'>
-                        <h2 className='text-xs font-bold'>AS</h2>
-                    </div>
-                    <h3>Me</h3>
-                </div>
-            </div>
-    </>
-  )
+                <span className={`text-[11px] font-medium ${active === 3 ? 'text-[#7C3AED]' : 'text-[#6B6880]'}`}>
+                    Me
+                </span>
+            </button>
+        </div>
+    )
 }
