@@ -14,6 +14,7 @@ import resendOtpRoute from "./routes/resendOtp.routes.js";
 import verifyOtpRoute from "./routes/verifyOtp.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import { socketAuth } from "./middlewares/socket.middleware.js";
+import { getAllUsers } from "./utils/fetchAllUsers.utils.js";
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -44,16 +45,12 @@ socketAuth(io);
 const onlineUsers = new Map();
 
 io.on("connection", (socket) => {
+    socket.on("get-all-users", async () => {
 
-  onlineUsers.set(socket.user.email)
+        const users = await getAllUsers();
 
-  socket.on("get-current-user", () => {
-    socket.emit("connected-user", socket.user);
-  });
-  
-  socket.on("disconnect", () => {
-    onlineUsers.delete(socket.user._id)
-  })
+        socket.emit("all-users", users);
+    });
 });
 
 // Routes
