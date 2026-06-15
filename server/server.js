@@ -6,12 +6,14 @@ import { Server } from "socket.io";
 import cors from "cors";
 import db from "./db/index.db.js";
 import cookieParser from "cookie-parser";
+import jwt from "jsonwebtoken";
 
 // routes
 import sendOtpRoute from "./routes/sendOtp.routes.js";
 import resendOtpRoute from "./routes/resendOtp.routes.js";
 import verifyOtpRoute from "./routes/verifyOtp.routes.js";
 import authRoutes from "./routes/auth.routes.js";
+import { socketAuth } from "./middlewares/socket.middleware.js";
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -34,6 +36,24 @@ const io = new Server(server, {
     origin: "http://localhost:5173",
     credentials: true,
   },
+});
+
+// socket middleware
+socketAuth(io);
+
+const onlineUsers = new Map();
+
+io.on("connection", (socket) => {
+
+  onlineUsers.set(socket.user.email)
+
+  socket.on("get-current-user", () => {
+    socket.emit("connected-user", socket.user);
+  });
+  
+  socket.on("disconnect", () => {
+    onlineUsers.delete(socket.user._id)
+  })
 });
 
 // Routes

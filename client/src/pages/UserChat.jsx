@@ -1,7 +1,11 @@
+import { useState } from "react";
 import { ChatviewFooter } from "../components/ChatviewFooter";
 import { ChatviewNav } from "../components/ChatviewNav";
+import { useEffect } from "react";
+import { useSocket } from "../context/SocketContext";
 
 export const UserChat = () => {
+
     return (
         (
             <div className="h-screen w-full bg-[#16132A]">
