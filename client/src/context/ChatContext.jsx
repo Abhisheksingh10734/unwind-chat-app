@@ -3,16 +3,19 @@ import { createContext, useContext, useState } from "react";
 const ChatContext = createContext();
 
 export const ChatProvider = ({ children }) => {
-    const [isChatVisible, setIsChatVisible] = useState(false);
-    const [isHomeChat, setIsHomeChat] = useState(false);
+    const [userProfile, setUserProfile] = useState(null);
+    const [username, setUsername] = useState(null);
+    const [userStatus, setUserStatus] = useState(null);
 
     return (
         <ChatContext.Provider
             value={{
-                isChatVisible,
-                setIsChatVisible,
-                isHomeChat,
-                setIsHomeChat
+                setUserProfile,
+                setUsername,
+                setUserStatus,
+                userProfile,
+                username,
+                userStatus
             }}
         >
             {children}

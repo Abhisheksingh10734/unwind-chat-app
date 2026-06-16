@@ -4,6 +4,7 @@ import { Otp } from "./pages/Otp";
 import { Signup } from "./pages/Signup";
 import { ToastContainer } from "react-toastify";
 import { AuthLoader } from "./components/AuthLoader";
+import { UserChat } from "./pages/UserChat";
 
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
@@ -16,7 +17,7 @@ export const App = () => {
 
             <ToastContainer
                 position="top-right"
-                autoClose={3000}
+                autoClose={2000}
             />
 
             <Routes>
@@ -36,6 +37,15 @@ export const App = () => {
                     element={
                         <ProtectedRoute>
                             <Home />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/chats/:id/:email"
+                    element={
+                        <ProtectedRoute>
+                            <UserChat />
                         </ProtectedRoute>
                     }
                 />

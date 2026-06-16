@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useSocket } from "../context/SocketContext.jsx";
 import { useChat } from "../context/ChatContext";
+import { useNavigate, useParams } from "react-router-dom";
 
 const statusColor = {
     online: "bg-[#22C55E]",
@@ -12,19 +13,31 @@ const statusColor = {
 export const HomeChats = () => {
     const socket = useSocket();
     const [allUsers, setAllUsers] = useState([]);
+    const { id, email } = useParams();
+    const navigate = useNavigate();
+    const { setUserProfile, setUsername, setUserStatus } = useChat();
 
     useEffect(() => {
-        const handleUsers = (data) => {
-            setAllUsers(data);
-        };
 
-        socket.on("all-users", handleUsers);
+    const handleUsers = (data) => {
+        setAllUsers(data);
+    };
+
+    socket.on("all-users", handleUsers);
+
+    if (socket.connected) {
         socket.emit("get-all-users");
+    }
 
-        return () => {
-            socket.off("all-users", handleUsers);
-        };
-    }, [socket]);
+    socket.on("connect", () => {
+        socket.emit("get-all-users");
+    });
+
+    return () => {
+        socket.off("all-users", handleUsers);
+        socket.off("connect");
+    };
+}, [socket]);
 
     return (
         allUsers.length > 0 ? (
@@ -33,6 +46,7 @@ export const HomeChats = () => {
                     <div
                         key={item.id}
                         className="bg-[#16132A] rounded-xl cursor-pointer hover:bg-[#2D2A40] transition-colors duration-150"
+                        onClick={() => navigate(`/chats/${item.id}/${item.email}`)}
                     >
                         <div className="flex justify-between p-3 items-center">
                             <div className="flex items-center gap-3">
@@ -40,9 +54,8 @@ export const HomeChats = () => {
                                     <span>{item.email?.slice(0, 2).toUpperCase() ?? 'NA'}</span>
 
                                     <div
-                                        className={`w-3 h-3 absolute rounded-full right-0 bottom-0 border-2 border-[#16132A] ${
-                                            statusColor[item.status] ?? "hidden"
-                                        }`}
+                                        className={`w-3 h-3 absolute rounded-full right-0 bottom-0 border-2 border-[#16132A] ${statusColor[item.status] ?? "hidden"
+                                            }`}
                                     />
                                 </div>
 
