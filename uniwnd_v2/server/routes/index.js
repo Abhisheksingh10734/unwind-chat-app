@@ -12,7 +12,7 @@ const router = express.Router();
 router.post("/auth/send-otp", otpRateLimit, sendOtp);
 router.post("/auth/verify-otp", otpRateLimit, verifyOtp);
 router.post("/auth/resend-otp", otpRateLimit, resendOtp);
-router.post("/auth/login", otpRateLimit, loginUser);
+// router.post("/auth/login", otpRateLimit, loginUser);
 router.post("/auth/profile/setup", otpRateLimit, upload.single("avatar"), profileSetup);
 
 export default router;

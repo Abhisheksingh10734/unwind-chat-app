@@ -117,8 +117,8 @@ export const profileSetup = async (req, res) => {
         email.trim().toLowerCase(),
         avatarUrl,
         avatarPublicId,
-        false, // is_verified — email verification handled separately
-        false, // is_online — offline by default
+        true,
+        false,
         null,  // refresh_token — will be updated below
       ]
     );
