@@ -3,11 +3,15 @@ import { otpRateLimit } from "../middlewares/rateLimit.middlewares.js";
 import { sendOtp } from "../controllers/sendOtp.controllers.js";
 import { verifyOtp } from "../controllers/verifyOtp.controllers.js";
 import { resendOtp } from "../controllers/resendOtp.controllers.js";
+import { loginUser } from "../controllers/login.controllers.js";
+import { profileSetup } from "../controllers/profileSetup.controllers.js";
 
 const router = express.Router();
 
 router.post("/auth/send-otp", otpRateLimit, sendOtp);
 router.post("/auth/verify-otp", otpRateLimit, verifyOtp);
 router.post("/auth/resend-otp", otpRateLimit, resendOtp);
+router.post("/auth/login", otpRateLimit, loginUser);
+router.post("/auth/profile/setup", otpRateLimit, profileSetup);
 
 export default router;
