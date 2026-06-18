@@ -1,10 +1,10 @@
 import cloudinary from "../config/cloudinary.config.js";
+import streamifier from "streamifier";
 import db from "../db/index.js";
 import { generateAccessToken, generateRefreshToken } from "../services/jwt.services.js";
 import { verifyEmail } from "../utils/verifyEmail.utils.js";
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
-
+// ─── Helper: Capitalize each word of a string ───────────────────────────────
 const capitalizeWords = (str) => {
   return str
     .trim()
@@ -13,42 +13,64 @@ const capitalizeWords = (str) => {
     .join(" ");
 };
 
-// ─── Controller ─────────────────────────────────────────────────────────────
+// ─── Helper: Upload image buffer to Cloudinary via stream ───────────────────
+const uploadToCloudinary = (buffer) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: "unwind/avatars",
+        transformation: [
+          { width: 400, height: 400, crop: "fill", gravity: "face" },
+          { quality: "auto", fetch_format: "auto" },
+        ],
+      },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+    // pipe the file buffer into cloudinary upload stream
+    streamifier.createReadStream(buffer).pipe(stream);
+  });
+};
 
+// ─── Controller: profileSetup ────────────────────────────────────────────────
 export const profileSetup = async (req, res) => {
   try {
-    const { avatar, username, email } = req.body;
+    const { username, email } = req.body;
 
-    // missing check
-    if (!avatar || !username || !email) {
+    // ── 1. Check if file was attached by multer ───────────────────────────────
+    const avatarFile = req.file;
+
+    // ── 2. Missing fields check ───────────────────────────────────────────────
+    if (!avatarFile || !username || !email) {
       return res.status(400).json({
         success: false,
-        message: "Avatar, username and email are required.",
+        message: "Avatar file, username and email are required.",
       });
     }
 
-    // ── 3. Username trim + capitalize ─────────────────────────────────────────
+    // ── 3. Trim and capitalize each word of username ──────────────────────────
     const cleanUsername = capitalizeWords(username);
 
-    // ── 4. Email format validate ──────────────────────────────────────────────
-    const error = verifyEmail(email);
-    
-    if(error) {
-        return res.status(400).json({
-            success: false,
-            message: error
-        });
+    // ── 4. Validate email format via utility ──────────────────────────────────
+    const emailError = verifyEmail(email);
+    if (emailError) {
+      return res.status(400).json({
+        success: false,
+        message: emailError,
+      });
     }
 
-    // ── 5. Username length check ──────────────────────────────────────────────
+    // ── 5. Username length check (2–30 characters) ────────────────────────────
     if (cleanUsername.length < 2 || cleanUsername.length > 30) {
       return res.status(400).json({
         success: false,
-        message: "Username must between 2 to 30 characters.",
+        message: "Username must be between 2 to 30 characters.",
       });
     }
 
-    // ── 6. Username already exists? ───────────────────────────────────────────
+    // ── 6. Check for duplicate username or email in DB ────────────────────────
     const existingUser = await db.query(
       "SELECT id FROM unwind_users WHERE username = $1 OR email = $2",
       [cleanUsername, email.trim().toLowerCase()]
@@ -57,20 +79,14 @@ export const profileSetup = async (req, res) => {
     if (existingUser.rows.length > 0) {
       return res.status(409).json({
         success: false,
-        message: "Ye username ya email pehle se exist karta hai.",
+        message: "This username or email already exists.",
       });
     }
 
-    // ── 7. Cloudinary image upload ─────────────────────────────────────────
+    // ── 7. Upload avatar buffer to Cloudinary ─────────────────────────────────
     let uploadResult;
     try {
-      uploadResult = await cloudinary.uploader.upload(avatar, {
-        folder: "unwind/avatars",
-        transformation: [
-          { width: 400, height: 400, crop: "fill", gravity: "face" },
-          { quality: "auto", fetch_format: "auto" },
-        ],
-      });
+      uploadResult = await uploadToCloudinary(avatarFile.buffer);
     } catch (uploadError) {
       console.error("Cloudinary upload error:", uploadError);
       return res.status(500).json({
@@ -79,7 +95,7 @@ export const profileSetup = async (req, res) => {
       });
     }
 
-    // ── 8. Upload success verify ──────────────────────────────────────────────
+    // ── 8. Verify Cloudinary returned a valid URL ─────────────────────────────
     if (!uploadResult || !uploadResult.secure_url) {
       return res.status(500).json({
         success: false,
@@ -90,7 +106,7 @@ export const profileSetup = async (req, res) => {
     const avatarUrl = uploadResult.secure_url;
     const avatarPublicId = uploadResult.public_id;
 
-    // ── 9. Insert user into DB ───────────────────────────────────────────
+    // ── 9. Insert new user into DB ────────────────────────────────────────────
     const insertResult = await db.query(
       `INSERT INTO unwind_users 
         (username, email, avatar, avatar_public_id, is_verified, is_online, refresh_token) 
@@ -101,19 +117,19 @@ export const profileSetup = async (req, res) => {
         email.trim().toLowerCase(),
         avatarUrl,
         avatarPublicId,
-        false,
-        false,
-        null,
+        false, // is_verified — email verification handled separately
+        false, // is_online — offline by default
+        null,  // refresh_token — will be updated below
       ]
     );
 
     const newUser = insertResult.rows[0];
 
-    // ── 10. generate tokens ──────────────────────────────────────────────
+    // ── 10. Generate access and refresh tokens ────────────────────────────────
     const accessToken = generateAccessToken(newUser.id, newUser.email);
     const refreshToken = generateRefreshToken(newUser.id, newUser.email);
 
-    // ── 11. Refresh token DB mein save karo ───────────────────────────────────
+    // ── 11. Save refresh token in DB ──────────────────────────────────────────
     await db.query(
       "UPDATE unwind_users SET refresh_token = $1 WHERE id = $2",
       [refreshToken, newUser.id]
@@ -121,16 +137,26 @@ export const profileSetup = async (req, res) => {
 
     // ── 12. Cookie options ────────────────────────────────────────────────────
     const cookieOptions = {
-      httpOnly: true,   // not access with JS — XSS safe
-      secure: process.env.NODE_ENV === "production",  // HTTPS only in prod
-      sameSite: "strict",
+      httpOnly: true,                                    // not accessible via JS — XSS safe
+      secure: process.env.NODE_ENV === "production",    // HTTPS only in production
+      sameSite: "strict",                               // CSRF protection
     };
 
-    // ── 13. Response bhejo ────────────────────────────────────────────────────
+    const accessTokenOptions = {
+      ...cookieOptions,
+      maxAge: 15 * 60 * 1000,           // 15 minutes
+    };
+
+    const refreshTokenOptions = {
+      ...cookieOptions,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    };
+
+    // ── 13. Send response with cookies ────────────────────────────────────────
     return res
       .status(201)
-      .cookie("accessToken", cookieOptions, accessToken)
-      .cookie("refreshToken", cookieOptions, refreshToken)
+      .cookie("accessToken", accessToken, accessTokenOptions)    // ✅ (name, value, options)
+      .cookie("refreshToken", refreshToken, refreshTokenOptions) // ✅ (name, value, options)
       .json({
         success: true,
         message: "Profile setup successfully!",
@@ -143,14 +169,14 @@ export const profileSetup = async (req, res) => {
           is_online: newUser.is_online,
           created_at: newUser.created_at,
         },
-        accessToken,
+        accessToken, // also sent in body for clients that can't read cookies (e.g. mobile)
       });
 
   } catch (error) {
     console.error("profileSetup error:", error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error. Try again",
+      message: "Internal server error. Try again.",
       ...(process.env.NODE_ENV === "development" && { error: error.message }),
     });
   }
