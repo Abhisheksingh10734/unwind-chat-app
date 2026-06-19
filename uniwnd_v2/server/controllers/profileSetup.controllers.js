@@ -152,6 +152,9 @@ export const profileSetup = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     };
 
+    // setting user into the req
+    req.user = newUser;
+
     // ── 13. Send response with cookies ────────────────────────────────────────
     return res
       .status(201)

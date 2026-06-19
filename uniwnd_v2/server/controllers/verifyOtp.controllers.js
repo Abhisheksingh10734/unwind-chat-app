@@ -1,5 +1,6 @@
 import db from "../db/index.js";
 import { compareOtp } from "../services/compareOtp.services.js";
+import { generateAccessToken, generateRefreshToken } from "../services/jwt.services.js";
 
 export const verifyOtp = async (req, res) => {
     try {
@@ -76,8 +77,40 @@ export const verifyOtp = async (req, res) => {
             });
         }
 
+        // register user into db
+        const registerUser = await db.query("INSERT INTO unwind_users (username, email, avatar, is_verified, is_online, last_seen, refresh_token) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, email", [null, email, null, true, false, null, null]);
+
+        if (registerUser.rowCount === 0) {
+            return res.status(500).json({
+                success: false,
+                message: "Error while registering the user"
+            });
+        }
+
+
         // delete user data from unwind_otp after verification
         await db.query("DELETE FROM unwind_otp WHERE email = $1", [email]);
+
+        // generate tokens
+        const accessToken = generateAccessToken(registerUser.rows[0].id, registerUser.rows[0].email);
+        const refreshToken = generateRefreshToken(registerUser.rows[0].id);
+
+        const options = {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict"
+        };
+
+        // Save refresh token to DB
+        await db.query(
+            "UPDATE unwind_users SET refresh_token = $1 WHERE id = $2",
+            [refreshToken, registerUser.rows[0].id]
+        );
+
+        // Set cookies
+        res.cookie("accessToken", accessToken, options);
+        res.cookie("refreshToken", refreshToken, options);
+
 
         // send success response
         return res.status(200).json({
