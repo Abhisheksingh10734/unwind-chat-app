@@ -107,18 +107,16 @@ export const verifyOtp = async (req, res) => {
             [refreshToken, registerUser.rows[0].id]
         );
 
-        // Set cookies
+
+        // set cookies
         res.cookie("accessToken", accessToken, options);
         res.cookie("refreshToken", refreshToken, options);
 
-
-        // send success response
         return res.status(200).json({
             success: true,
             email,
             message: "OTP verified successfully"
         });
-
     } catch (error) {
         console.log(error);
 

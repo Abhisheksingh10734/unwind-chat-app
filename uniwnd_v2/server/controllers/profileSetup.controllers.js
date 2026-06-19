@@ -1,7 +1,6 @@
 import cloudinary from "../config/cloudinary.config.js";
 import streamifier from "streamifier";
 import db from "../db/index.js";
-import { generateAccessToken, generateRefreshToken } from "../services/jwt.services.js";
 import { verifyEmail } from "../utils/verifyEmail.utils.js";
 
 // ─── Helper: Capitalize each word of a string ───────────────────────────────
@@ -29,7 +28,6 @@ const uploadToCloudinary = (buffer) => {
         else resolve(result);
       }
     );
-    // pipe the file buffer into cloudinary upload stream
     streamifier.createReadStream(buffer).pipe(stream);
   });
 };
@@ -70,16 +68,16 @@ export const profileSetup = async (req, res) => {
       });
     }
 
-    // ── 6. Check for duplicate username or email in DB ────────────────────────
+    // ── 6. Check user exists in DB ────────────────────────────────────────────
     const existingUser = await db.query(
-      "SELECT id FROM unwind_users WHERE username = $1 OR email = $2",
-      [cleanUsername, email.trim().toLowerCase()]
+      "SELECT id FROM unwind_users WHERE email = $1",
+      [email.trim().toLowerCase()]
     );
 
-    if (existingUser.rows.length > 0) {
-      return res.status(409).json({
+    if (existingUser.rows.length === 0) {
+      return res.status(404).json({
         success: false,
-        message: "This username or email already exists.",
+        message: "User not found. Please register first.",
       });
     }
 
@@ -106,74 +104,29 @@ export const profileSetup = async (req, res) => {
     const avatarUrl = uploadResult.secure_url;
     const avatarPublicId = uploadResult.public_id;
 
-    // ── 9. Insert new user into DB ────────────────────────────────────────────
-    const insertResult = await db.query(
-      `INSERT INTO unwind_users 
-        (username, email, avatar, avatar_public_id, is_verified, is_online, refresh_token) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7) 
-       RETURNING id, username, email, avatar, is_verified, is_online, created_at`,
-      [
-        cleanUsername,
-        email.trim().toLowerCase(),
-        avatarUrl,
-        avatarPublicId,
-        true,
-        false,
-        null,  // refresh_token — will be updated below
-      ]
+    // ── 9. Update user in DB ──────────────────────────────────────────────────
+    const updateResult = await db.query(
+      `UPDATE unwind_users 
+       SET username = $1,
+           avatar = $2,
+           avatar_public_id = $3
+       WHERE email = $4`,
+      [cleanUsername, avatarUrl, avatarPublicId, email.trim().toLowerCase()]
     );
 
-    const newUser = insertResult.rows[0];
-
-    // ── 10. Generate access and refresh tokens ────────────────────────────────
-    const accessToken = generateAccessToken(newUser.id, newUser.email);
-    const refreshToken = generateRefreshToken(newUser.id, newUser.email);
-
-    // ── 11. Save refresh token in DB ──────────────────────────────────────────
-    await db.query(
-      "UPDATE unwind_users SET refresh_token = $1 WHERE id = $2",
-      [refreshToken, newUser.id]
-    );
-
-    // ── 12. Cookie options ────────────────────────────────────────────────────
-    const cookieOptions = {
-      httpOnly: true,                                    // not accessible via JS — XSS safe
-      secure: process.env.NODE_ENV === "production",    // HTTPS only in production
-      sameSite: "strict",                               // CSRF protection
-    };
-
-    const accessTokenOptions = {
-      ...cookieOptions,
-      maxAge: 15 * 60 * 1000,           // 15 minutes
-    };
-
-    const refreshTokenOptions = {
-      ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    };
-
-    // setting user into the req
-    req.user = newUser;
-
-    // ── 13. Send response with cookies ────────────────────────────────────────
-    return res
-      .status(201)
-      .cookie("accessToken", accessToken, accessTokenOptions)    // ✅ (name, value, options)
-      .cookie("refreshToken", refreshToken, refreshTokenOptions) // ✅ (name, value, options)
-      .json({
-        success: true,
-        message: "Profile setup successfully!",
-        user: {
-          id: newUser.id,
-          username: newUser.username,
-          email: newUser.email,
-          avatar: newUser.avatar,
-          is_verified: newUser.is_verified,
-          is_online: newUser.is_online,
-          created_at: newUser.created_at,
-        },
-        accessToken, // also sent in body for clients that can't read cookies (e.g. mobile)
+    // ── 10. Check if update affected any rows ─────────────────────────────────
+    if (updateResult.rowCount === 0) {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to update profile. Try again.",
       });
+    }
+
+    // ── 11. Send success response ─────────────────────────────────────────────
+    return res.status(200).json({
+      success: true,
+      message: "Profile setup successfully!",
+    });
 
   } catch (error) {
     console.error("profileSetup error:", error);
