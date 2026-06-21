@@ -4,6 +4,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Signup } from './pages/Signup';
 import { VerifyOtp } from './pages/VerifyOtp';
 import { ProfileSetup } from './pages/ProfileSetup';
+import { ChatHome } from './pages/ChatHome';
+import { Chat } from './pages/Chat';
 
 export const App = () => {
   return (
@@ -19,12 +21,14 @@ export const App = () => {
         }} />
 
       <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Signup />} />
-        <Route path="/verify-otp" element={<VerifyOtp />} />
-        <Route path="/setup/profile" element={<ProfileSetup />} />
-      </Routes>
-    </BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Signup />} />
+          <Route path="/verify-otp" element={<VerifyOtp />} />
+          <Route path="/setup/profile" element={<ProfileSetup />} />
+          <Route path="/auth/chats" element={<ChatHome />} />
+          <Route path="/auth/chats/:id" element={<Chat />} />
+        </Routes>
+      </BrowserRouter>
 
     </div>
   )
