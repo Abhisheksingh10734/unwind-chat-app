@@ -4,37 +4,36 @@ import { useSocket } from "../context/SocketContext";
 import api from "../api/axios";
 
 export const Chat = () => {
-    const [message, setMessage] = useState({
-        from: "",
-        to: "",
-        text: ""
-    });
-
-    const [inputVal, setInputVal] = useState("")
+    const [inputVal, setInputVal] = useState("");
 
     const navigate = useNavigate();
     const socket = useSocket();
-    const params = useParams();
-    const receiverId = params.id;
+    const { id: receiverId } = useParams();
+
     const [receiverDets, setReceiverDets] = useState({
         id: "",
         receiverUsername: "",
         receiverAvatar: "",
-        receiverOnlineStatus: ""
+        receiverOnlineStatus: false
     });
 
     useEffect(() => {
         const fetchReceiver = async () => {
             try {
-                const res = await api.get(`/api/auth/chats/${receiverId}`);
+                const res = await api.get(
+                    `/api/auth/chats/${receiverId}`
+                );
 
                 if (res.data.success) {
                     setReceiverDets({
                         id: res.data.receiver.id,
-                        receiverUsername: res.data.receiver.username,
-                        receiverAvatar: res.data.receiver.avatar,
-                        receiverOnlineStatus: res.data.receiver.is_online
-                    })
+                        receiverUsername:
+                            res.data.receiver.username,
+                        receiverAvatar:
+                            res.data.receiver.avatar,
+                        receiverOnlineStatus:
+                            res.data.receiver.is_online
+                    });
                 }
             } catch (error) {
                 console.error(error);
@@ -44,26 +43,30 @@ export const Chat = () => {
         fetchReceiver();
     }, [receiverId]);
 
-
-    const handleSend = (e) => {
+    const handleSend = async (e) => {
         e.preventDefault();
 
-        if(inputVal.trim() === "") {
-            return;
+        const text = inputVal.trim();
+
+        if (!text) return;
+
+        try {
+            const payload = {
+                to: Number(receiverId),
+                text
+            };
+
+            const res = await api.post(
+                "/api/auth/send-message",
+                payload
+            );
+
+            setInputVal("");
+        } catch (error) {
+            console.error(
+                error?.response?.data || error
+            );
         }
-
-        setMessage({
-            from: receiverId,
-            to: "",
-            text: inputVal
-        });
-
-        useEffect(() => {
-          const sendMessage = async () => {
-            const res = api.post("/api/auth/send-message", {message});
-          }
-        }, [])
-        
     };
 
     return (
@@ -74,18 +77,26 @@ export const Chat = () => {
 
                 <div className="flex items-center gap-4">
 
-                    {/* Back Button */}
-                    <button className="text-white text-xl hover:text-[#7C3AED] cursor-pointer transition" onClick={() => navigate("/auth/chats")}>
+                    <button
+                        className="text-white text-xl hover:text-[#7C3AED] cursor-pointer transition"
+                        onClick={() =>
+                            navigate("/auth/chats")
+                        }
+                    >
                         ←
                     </button>
 
-                    {/* Avatar */}
                     <div className="relative">
                         <div className="w-12 h-12 rounded-full bg-[#7C3AED] flex items-center justify-center font-bold text-lg">
+
                             {receiverDets.receiverAvatar ? (
                                 <img
-                                    src={receiverDets.receiverAvatar}
-                                    alt={receiverDets.receiverUsername}
+                                    src={
+                                        receiverDets.receiverAvatar
+                                    }
+                                    alt={
+                                        receiverDets.receiverUsername
+                                    }
                                     className="w-full h-full rounded-full object-cover"
                                 />
                             ) : (
@@ -96,25 +107,29 @@ export const Chat = () => {
                         </div>
 
                         <span
-                            className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-[#1E1B2E] ${receiverDets.is_online ? "bg-green-500" : "bg-gray-500"
+                            className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-[#1E1B2E] ${receiverDets.receiverOnlineStatus
+                                    ? "bg-green-500"
+                                    : "bg-gray-500"
                                 }`}
                         />
                     </div>
 
-                    {/* User Info */}
                     <div>
                         <h2 className="font-semibold text-white">
-                            {receiverDets.receiverUsername}
+                            {
+                                receiverDets.receiverUsername
+                            }
                         </h2>
 
                         <p className="text-xs text-green-400">
-                            {receiverDets.is_online ? "Online" : "Offline"}
+                            {receiverDets.receiverOnlineStatus
+                                ? "Online"
+                                : "Offline"}
                         </p>
                     </div>
 
                 </div>
 
-                {/* Optional Menu */}
                 <button className="text-white text-2xl cursor-pointer">
                     ⋮
                 </button>
@@ -124,34 +139,11 @@ export const Chat = () => {
             {/* Messages */}
             <div className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-4">
 
-                {/* {messages.map((msg) => (
-                    <div
-                        key={msg.id}
-                        className={`flex ${
-                            msg.sender === "me"
-                                ? "justify-end"
-                                : "justify-start"
-                        }`}
-                    >
-                        <div
-                            className={`max-w-[75%] px-4 py-3 rounded-2xl ${
-                                msg.sender === "me"
-                                    ? "bg-[#7C3AED] text-white rounded-br-md"
-                                    : "bg-[#2D2A40] text-white rounded-bl-md"
-                            }`}
-                        >
-                            <p>{msg.text}</p>
-
-                            <p className="text-[10px] opacity-70 mt-2 text-right">
-                                {msg.time}
-                            </p>
-                        </div>
-                    </div>
-                ))} */}
+                {/* Messages render here */}
 
             </div>
 
-            {/* Input Area */}
+            {/* Input */}
             <form
                 onSubmit={handleSend}
                 className="bg-[#1E1B2E] border-t border-[#2D2A40] p-4"
@@ -170,7 +162,7 @@ export const Chat = () => {
 
                     <button
                         type="submit"
-                        className="px-6 bg-[#7C3AED] text-white font-semibold rounded-xl hover:brightness-110 active:scale-95 transition-all"
+                        className="px-6 bg-[#7C3AED] text-white font-semibold rounded-xl hover:brightness-110 active:scale-95 transition-all cursor-pointer"
                     >
                         Send
                     </button>

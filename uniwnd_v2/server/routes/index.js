@@ -10,6 +10,7 @@ import { currentUser } from "../controllers/currentUser.controller.js";
 import { auth } from "../middlewares/auth.middlerwares.js";
 import { getAllUsers } from "../controllers/getAllUsers.controllers.js";
 import { getReceiver } from "../controllers/getReceiver.controllers.js";
+import { receiveMessage } from "../controllers/receiveMessage.controllers.js";
 // import { logout } from "../controllers/logout.controllers.js";
 
 const router = express.Router();
@@ -23,5 +24,6 @@ router.post("/auth/profile/setup",  upload.single("avatar"), profileSetup);
 router.get("/auth/me", auth, currentUser);
 router.get("/auth/get-users", auth, getAllUsers);
 router.get("/auth/chats/:id", getReceiver);
+router.post("/auth/send-message", auth, receiveMessage);
 
 export default router;
