@@ -7,7 +7,7 @@ export const SocketProvider = ({ children }) => {
     const [socket, setSocket] = useState(null);
 
     useEffect(() => {
-        const socketInstance = io("http://localhost:5000", {
+        const socketInstance = io("http://localhost:3000", {
             withCredentials: true,
             transports: ["websocket"],
         });

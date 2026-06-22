@@ -1,44 +1,69 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useSocket } from "../context/SocketContext";
+import api from "../api/axios";
 
 export const Chat = () => {
-    const [message, setMessage] = useState("");
-    const navigate = useNavigate();
+    const [message, setMessage] = useState({
+        from: "",
+        to: "",
+        text: ""
+    });
 
-    const messages = [
-        {
-            id: 1,
-            sender: "other",
-            text: "Hey! How are you?",
-            time: "10:30 PM",
-        },
-        {
-            id: 2,
-            sender: "me",
-            text: "I'm good. What about you?",
-            time: "10:31 PM",
-        },
-        {
-            id: 3,
-            sender: "other",
-            text: "Doing great! Working on Unwind 😄",
-            time: "10:32 PM",
-        },
-        {
-            id: 4,
-            sender: "me",
-            text: "Nice! The UI is looking clean.",
-            time: "10:33 PM",
-        },
-    ];
+    const [inputVal, setInputVal] = useState("")
+
+    const navigate = useNavigate();
+    const socket = useSocket();
+    const params = useParams();
+    const receiverId = params.id;
+    const [receiverDets, setReceiverDets] = useState({
+        id: "",
+        receiverUsername: "",
+        receiverAvatar: "",
+        receiverOnlineStatus: ""
+    });
+
+    useEffect(() => {
+        const fetchReceiver = async () => {
+            try {
+                const res = await api.get(`/api/auth/chats/${receiverId}`);
+
+                if (res.data.success) {
+                    setReceiverDets({
+                        id: res.data.receiver.id,
+                        receiverUsername: res.data.receiver.username,
+                        receiverAvatar: res.data.receiver.avatar,
+                        receiverOnlineStatus: res.data.receiver.is_online
+                    })
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        fetchReceiver();
+    }, [receiverId]);
+
 
     const handleSend = (e) => {
         e.preventDefault();
 
-        if (!message.trim()) return;
+        if(inputVal.trim() === "") {
+            return;
+        }
 
-        console.log(message);
-        setMessage("");
+        setMessage({
+            from: receiverId,
+            to: "",
+            text: inputVal
+        });
+
+        useEffect(() => {
+          const sendMessage = async () => {
+            const res = api.post("/api/auth/send-message", {message});
+          }
+        }, [])
+        
     };
 
     return (
@@ -57,27 +82,40 @@ export const Chat = () => {
                     {/* Avatar */}
                     <div className="relative">
                         <div className="w-12 h-12 rounded-full bg-[#7C3AED] flex items-center justify-center font-bold text-lg">
-                            J
+                            {receiverDets.receiverAvatar ? (
+                                <img
+                                    src={receiverDets.receiverAvatar}
+                                    alt={receiverDets.receiverUsername}
+                                    className="w-full h-full rounded-full object-cover"
+                                />
+                            ) : (
+                                receiverDets.receiverUsername
+                                    ?.charAt(0)
+                                    .toUpperCase()
+                            )}
                         </div>
 
-                        <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-green-500 border-2 border-[#1E1B2E]" />
+                        <span
+                            className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-[#1E1B2E] ${receiverDets.is_online ? "bg-green-500" : "bg-gray-500"
+                                }`}
+                        />
                     </div>
 
                     {/* User Info */}
                     <div>
                         <h2 className="font-semibold text-white">
-                            John Doe
+                            {receiverDets.receiverUsername}
                         </h2>
 
                         <p className="text-xs text-green-400">
-                            Online
+                            {receiverDets.is_online ? "Online" : "Offline"}
                         </p>
                     </div>
 
                 </div>
 
                 {/* Optional Menu */}
-                <button className="text-white text-2xl">
+                <button className="text-white text-2xl cursor-pointer">
                     ⋮
                 </button>
 
@@ -86,7 +124,7 @@ export const Chat = () => {
             {/* Messages */}
             <div className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-4">
 
-                {messages.map((msg) => (
+                {/* {messages.map((msg) => (
                     <div
                         key={msg.id}
                         className={`flex ${
@@ -109,7 +147,7 @@ export const Chat = () => {
                             </p>
                         </div>
                     </div>
-                ))}
+                ))} */}
 
             </div>
 
@@ -123,9 +161,9 @@ export const Chat = () => {
                     <input
                         type="text"
                         placeholder="Type a message..."
-                        value={message}
+                        value={inputVal}
                         onChange={(e) =>
-                            setMessage(e.target.value)
+                            setInputVal(e.target.value)
                         }
                         className="flex-1 bg-[#2D2A40] text-white placeholder:text-[#6B6880] px-4 py-3 rounded-xl outline-none border-2 border-transparent focus:border-[#7C3AED] transition-all"
                     />

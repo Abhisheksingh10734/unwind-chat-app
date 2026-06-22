@@ -9,6 +9,7 @@ import { upload } from "../middlewares/multer.middlewares.js";
 import { currentUser } from "../controllers/currentUser.controller.js";
 import { auth } from "../middlewares/auth.middlerwares.js";
 import { getAllUsers } from "../controllers/getAllUsers.controllers.js";
+import { getReceiver } from "../controllers/getReceiver.controllers.js";
 // import { logout } from "../controllers/logout.controllers.js";
 
 const router = express.Router();
@@ -21,5 +22,6 @@ router.post("/auth/resend-otp", otpRateLimit, resendOtp);
 router.post("/auth/profile/setup",  upload.single("avatar"), profileSetup);
 router.get("/auth/me", auth, currentUser);
 router.get("/auth/get-users", auth, getAllUsers);
+router.get("/auth/chats/:id", getReceiver);
 
 export default router;
