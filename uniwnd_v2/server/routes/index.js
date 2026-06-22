@@ -20,6 +20,6 @@ router.post("/auth/resend-otp", otpRateLimit, resendOtp);
 // router.post("/auth/logout", logout);
 router.post("/auth/profile/setup",  upload.single("avatar"), profileSetup);
 router.get("/auth/me", auth, currentUser);
-router.get("/auth/get-users", auth, getAllUsers)
+router.get("/auth/get-users", auth, getAllUsers);
 
 export default router;

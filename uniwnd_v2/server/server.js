@@ -2,12 +2,12 @@ import "dotenv/config";
 
 import express from "express";
 import http from "http";
-import { Server } from "socket.io";
 import cors from "cors";
 import db from "./db/index.js";
 import cookieParser from "cookie-parser";
 import { globalRateLimit } from "../server/middlewares/rateLimit.middlewares.js";
 import routes from "./routes/index.js";
+import { initializeSocket } from "./sockets/index.js";
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -20,9 +20,8 @@ app.use(express.urlencoded({ extended: true }));
 
 const server = http.createServer(app);
 
-const io = new Server(server, {
-  cors: { origin: "http://localhost:5173", credentials: true },
-});
+// Initialize socket.io
+initializeSocket(server);
 
 app.use("/api", routes)
 
