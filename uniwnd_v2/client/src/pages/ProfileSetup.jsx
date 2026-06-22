@@ -21,7 +21,7 @@ export const ProfileSetup = () => {
             toast.error(
                 "It looks like you are not signed up yet! Please signup first."
             );
-            navigate("/auth/chats");
+            navigate("/");
         }
     }, [userEmail, navigate]);
 
@@ -86,7 +86,7 @@ export const ProfileSetup = () => {
                     res.data.message || "Profile created successfully!"
                 );
 
-                navigate("/dashboard");
+                navigate("/auth/chats");
             } else {
                 toast.error(
                     res.data.message || "Failed to create profile."
