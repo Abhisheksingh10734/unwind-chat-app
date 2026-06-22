@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../api/axios";
 
 export const ChatHome = () => {
     const [search, setSearch] = useState("");
     const navigate = useNavigate();
+    const [currentUserDets, setCurrentUserDets] = useState({ currentUserID: "", currentUserUsername: "", currentUserEmail: "", currentUserAvatar: "" });
 
     const chats = [
         {
@@ -48,6 +50,21 @@ export const ChatHome = () => {
         },
     ];
 
+    useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                const res = await api.get("/api/auth/me");
+                setCurrentUserDets({ currentUserID: res.data.currentUserID, currentUserUsername: res.data.currentUserUsername, currentUserEmail: res.data.currentUserEmail, currentUserAvatar: res.data.currentUserAvatar });
+
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        fetchUser();
+    }, []);
+
+
     const filteredChats = chats.filter((chat) =>
         chat.name.toLowerCase().includes(search.toLowerCase())
     );
@@ -65,14 +82,22 @@ export const ChatHome = () => {
                         </span>
                     </h1>
 
-                    <p className="text-[#6B6880] mt-1 text-sm">
-                        Connect with friends
+                    <p className="text-[#6B6880] mt-1 text-sm font-bold">
+                        {currentUserDets.currentUserUsername} || {currentUserDets.currentUserEmail}
                     </p>
                 </div>
 
                 {/* Profile */}
                 <div className="w-12 h-12 rounded-full bg-[#7C3AED] flex items-center justify-center text-lg font-bold cursor-pointer">
-                    U
+                    {currentUserDets.currentUserAvatar ? (
+                        <img
+                            src={currentUserDets.currentUserAvatar}
+                            alt={currentUserDets.currentUserUsername}
+                            className="w-full h-full rounded-full object-cover"
+                        />
+                    ) : (
+                        currentUserDets.currentUserUsername?.charAt(0).toUpperCase()
+                    )}
                 </div>
             </div>
 
