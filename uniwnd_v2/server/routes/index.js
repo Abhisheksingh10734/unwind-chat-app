@@ -6,6 +6,8 @@ import { resendOtp } from "../controllers/resendOtp.controllers.js";
 import { loginUser } from "../controllers/login.controllers.js";
 import { profileSetup } from "../controllers/profileSetup.controllers.js";
 import { upload } from "../middlewares/multer.middlewares.js";
+import { currentUser } from "../controllers/currentUser.controller.js";
+import { auth } from "../middlewares/auth.middlerwares.js";
 // import { logout } from "../controllers/logout.controllers.js";
 
 const router = express.Router();
@@ -16,5 +18,6 @@ router.post("/auth/resend-otp", otpRateLimit, resendOtp);
 // router.post("/auth/login", otpRateLimit, loginUser);
 // router.post("/auth/logout", logout);
 router.post("/auth/profile/setup",  upload.single("avatar"), profileSetup);
+router.get("/auth/me", auth, currentUser);
 
 export default router;
