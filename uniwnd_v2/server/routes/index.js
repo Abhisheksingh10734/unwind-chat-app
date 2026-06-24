@@ -11,6 +11,7 @@ import { auth } from "../middlewares/auth.middlerwares.js";
 import { getAllUsers } from "../controllers/getAllUsers.controllers.js";
 import { getReceiver } from "../controllers/getReceiver.controllers.js";
 import { receiveMessage } from "../controllers/receiveMessage.controllers.js";
+import { getMessages } from "../controllers/message.controllers.js";
 // import { logout } from "../controllers/logout.controllers.js";
 
 const router = express.Router();
@@ -25,5 +26,6 @@ router.get("/auth/me", auth, currentUser);
 router.get("/auth/get-users", auth, getAllUsers);
 router.get("/auth/chats/:id", getReceiver);
 router.post("/auth/send-message", auth, receiveMessage);
+router.get("/auth/messages/:receiverId", auth, getMessages);
 
 export default router;

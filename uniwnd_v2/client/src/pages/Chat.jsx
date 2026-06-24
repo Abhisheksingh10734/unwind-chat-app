@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSocket } from "../context/SocketContext";
 import api from "../api/axios";
@@ -7,6 +7,8 @@ export const Chat = () => {
     const [inputVal, setInputVal] = useState("");
     const [user, setUser] = useState(null);
     const [messages, setMessages] = useState([]);
+
+    const messagesContainerRef = useRef(null);
 
     const navigate = useNavigate();
     const { socket } = useSocket();
@@ -19,7 +21,15 @@ export const Chat = () => {
         receiverOnlineStatus: false
     });
 
-    // Current User
+    // Auto Scroll
+    useEffect(() => {
+        if (!messagesContainerRef.current) return;
+
+        messagesContainerRef.current.scrollTop =
+            messagesContainerRef.current.scrollHeight;
+    }, [messages]);
+
+    // Get Current User
     useEffect(() => {
         const fetchUser = async () => {
             try {
@@ -28,16 +38,18 @@ export const Chat = () => {
                 if (res.data.success) {
                     setUser(res.data.currentUserId);
                 }
-            } catch (error) {
-                console.error(error);
+            } catch (err) {
+                console.error(err);
             }
         };
 
         fetchUser();
     }, []);
 
-    // Receiver Details
+    // Get Receiver Details
     useEffect(() => {
+        if (!receiverId) return;
+
         const fetchReceiver = async () => {
             try {
                 const res = await api.get(
@@ -55,25 +67,40 @@ export const Chat = () => {
                             res.data.receiver.is_online
                     });
                 }
-            } catch (error) {
-                console.error(error);
+            } catch (err) {
+                console.error(err);
             }
         };
 
-        if (receiverId) {
-            fetchReceiver();
-        }
+        fetchReceiver();
+    }, [receiverId]);
+
+    // Fetch Old Messages
+    useEffect(() => {
+        if (!receiverId) return;
+
+        const fetchMessages = async () => {
+            try {
+                const res = await api.get(
+                    `/api/auth/messages/${receiverId}`
+                );
+
+                if (res.data.success) {
+                    setMessages(res.data.messages);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        };
+
+        fetchMessages();
     }, [receiverId]);
 
     // Join Chat Room
     useEffect(() => {
-        if (!socket || !user || !receiverId)
-            return;
+        if (!socket || !user || !receiverId) return;
 
-        const roomId = [
-            Number(user),
-            Number(receiverId)
-        ]
+        const roomId = [Number(user), Number(receiverId)]
             .sort((a, b) => a - b)
             .join("_");
 
@@ -84,17 +111,12 @@ export const Chat = () => {
         };
     }, [socket, user, receiverId]);
 
-    // Receive Messages Realtime
+    // Listen Realtime Messages
     useEffect(() => {
         if (!socket) return;
 
-        const handleReceiveMessage = (
-            message
-        ) => {
-            setMessages((prev) => [
-                ...prev,
-                message
-            ]);
+        const handleReceiveMessage = (message) => {
+            setMessages((prev) => [...prev, message]);
         };
 
         socket.on(
@@ -128,9 +150,9 @@ export const Chat = () => {
             );
 
             setInputVal("");
-        } catch (error) {
+        } catch (err) {
             console.error(
-                error?.response?.data || error
+                err?.response?.data || err
             );
         }
     };
@@ -144,17 +166,17 @@ export const Chat = () => {
                 <div className="flex items-center gap-4">
 
                     <button
-                        className="text-white text-xl hover:text-[#7C3AED] transition"
                         onClick={() =>
                             navigate("/auth/chats")
                         }
+                        className="text-white text-xl hover:text-[#7C3AED]"
                     >
                         ←
                     </button>
 
                     <div className="relative">
 
-                        <div className="w-12 h-12 rounded-full bg-[#7C3AED] flex items-center justify-center font-bold text-lg overflow-hidden">
+                        <div className="w-12 h-12 rounded-full bg-[#7C3AED] flex items-center justify-center overflow-hidden text-white font-bold">
 
                             {receiverDets.receiverAvatar ? (
                                 <img
@@ -169,7 +191,7 @@ export const Chat = () => {
                             ) : (
                                 receiverDets.receiverUsername
                                     ?.charAt(0)
-                                    .toUpperCase()
+                                    ?.toUpperCase()
                             )}
 
                         </div>
@@ -180,23 +202,21 @@ export const Chat = () => {
                                     ? "bg-green-500"
                                     : "bg-gray-500"
                             }`}
-                        />
+                        ></span>
 
                     </div>
 
                     <div>
-                        <h2 className="font-semibold text-white">
+                        <h2 className="text-white font-semibold">
                             {
                                 receiverDets.receiverUsername
                             }
                         </h2>
 
                         <p className="text-xs text-green-400">
-                            {
-                                receiverDets.receiverOnlineStatus
-                                    ? "Online"
-                                    : "Offline"
-                            }
+                            {receiverDets.receiverOnlineStatus
+                                ? "Online"
+                                : "Offline"}
                         </p>
                     </div>
 
@@ -209,34 +229,33 @@ export const Chat = () => {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-4">
+            <div
+                ref={messagesContainerRef}
+                className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-4"
+            >
 
-                {messages.map(
-                    (msg, index) => {
+                {messages.map((msg, index) => {
+                    const isMine =
+                        Number(msg.sender_id) ===
+                        Number(user);
 
-                        const isMine =
-                            Number(
-                                msg.sender_id
-                            ) ===
-                            Number(user);
-
-                        return (
-                            <div
-                                key={
-                                    msg.id ||
-                                    index
-                                }
-                                className={`max-w-[70%] px-4 py-3 rounded-2xl text-white break-words ${
-                                    isMine
-                                        ? "self-end bg-[#7C3AED]"
-                                        : "self-start bg-[#2D2A40]"
-                                }`}
-                            >
-                                {msg.text}
-                            </div>
-                        );
-                    }
-                )}
+                    return (
+                        <div
+                            key={
+                                msg.id ||
+                                msg.message_id ||
+                                index
+                            }
+                            className={`max-w-[70%] px-4 py-3 rounded-2xl text-white break-words ${
+                                isMine
+                                    ? "self-end bg-[#7C3AED]"
+                                    : "self-start bg-[#2D2A40]"
+                            }`}
+                        >
+                            {msg.text}
+                        </div>
+                    );
+                })}
 
             </div>
 
@@ -245,18 +264,19 @@ export const Chat = () => {
                 onSubmit={handleSend}
                 className="bg-[#1E1B2E] border-t border-[#2D2A40] p-4"
             >
+
                 <div className="flex gap-3">
 
                     <input
                         type="text"
-                        placeholder="Type a message..."
                         value={inputVal}
                         onChange={(e) =>
                             setInputVal(
                                 e.target.value
                             )
                         }
-                        className="flex-1 bg-[#2D2A40] text-white placeholder:text-[#6B6880] px-4 py-3 rounded-xl outline-none border-2 border-transparent focus:border-[#7C3AED]"
+                        placeholder="Type a message..."
+                        className="flex-1 bg-[#2D2A40] text-white px-4 py-3 rounded-xl outline-none border-2 border-transparent focus:border-[#7C3AED]"
                     />
 
                     <button
@@ -267,6 +287,7 @@ export const Chat = () => {
                     </button>
 
                 </div>
+
             </form>
 
         </div>

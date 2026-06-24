@@ -1,4 +1,5 @@
 import db from "../db/index.js";
+import { isUserOnline } from "../sockets/index.js";
 
 export const getReceiver = async (req, res) => {
     try {
@@ -27,7 +28,12 @@ export const getReceiver = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            receiver: receiverUser.rows[0]
+            receiver: {
+                ...receiverUser.rows[0],
+                is_online: isUserOnline(
+                    receiverUser.rows[0].id
+                )
+            }
         });
 
     } catch (error) {

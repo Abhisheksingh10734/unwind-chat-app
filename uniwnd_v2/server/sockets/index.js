@@ -16,21 +16,36 @@ const initializeSocket = (server) => {
 
         // Frontend sends userId after connection
         socket.on("register-user", (userId) => {
-            onlineUsers.set(userId, socket.id);
 
-            console.log("Online Users:", onlineUsers);
+            onlineUsers.set(
+                Number(userId),
+                socket.id
+            );
+
+            io.emit(
+                "user_online",
+                Number(userId)
+            );
         });
 
         socket.on("disconnect", () => {
 
-            for (const [userId, socketId] of onlineUsers.entries()) {
+            for (
+                const [userId, socketId]
+                of onlineUsers.entries()
+            ) {
                 if (socketId === socket.id) {
+
                     onlineUsers.delete(userId);
+
+                    io.emit(
+                        "user_offline",
+                        Number(userId)
+                    );
+
                     break;
                 }
             }
-
-            console.log("Disconnected:", socket.id);
         });
 
         socket.on("join_chat", (roomId) => {
@@ -54,6 +69,12 @@ const initializeSocket = (server) => {
 const getIO = () => io;
 
 const getOnlineUsers = () => onlineUsers;
+
+export const isUserOnline = (userId) => {
+    return onlineUsers.has(
+        Number(userId)
+    );
+};
 
 export {
     initializeSocket,
