@@ -32,6 +32,20 @@ const initializeSocket = (server) => {
 
             console.log("Disconnected:", socket.id);
         });
+
+        socket.on("join_chat", (roomId) => {
+
+            socket.join(roomId);
+
+            console.log(
+                `Socket ${socket.id} joined room ${roomId}`
+            );
+        });
+
+        socket.on("leave_chat", (roomId) => {
+
+            socket.leave(roomId);
+        });
     });
 
     return io;

@@ -1,4 +1,5 @@
 import db from "../db/index.js";
+import { getIO } from "../sockets/index.js";
 
 export const receiveMessage = async (req, res) => {
     try {
@@ -8,7 +9,8 @@ export const receiveMessage = async (req, res) => {
         if (!to || !text?.trim()) {
             return res.status(400).json({
                 success: false,
-                message: "Receiver id and message text are required"
+                message:
+                    "Receiver id and message text are required"
             });
         }
 
@@ -29,18 +31,38 @@ export const receiveMessage = async (req, res) => {
             ]
         );
 
+        const message = result.rows[0];
+
+        const roomId = [
+            Number(from),
+            Number(to)
+        ]
+            .sort((a, b) => a - b)
+            .join("_");
+
+        const io = getIO();
+
+        io.to(roomId).emit(
+            "receive_message",
+            message
+        );
+
         return res.status(201).json({
             success: true,
             message: "Message sent successfully",
-            data: result.rows[0]
+            data: message
         });
 
     } catch (error) {
-        console.error("Send Message Error:", error);
+        console.error(
+            "Send Message Error:",
+            error
+        );
 
         return res.status(500).json({
             success: false,
-            message: "Internal Server Error"
+            message:
+                "Internal Server Error"
         });
     }
 };
